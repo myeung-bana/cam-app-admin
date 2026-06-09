@@ -5,6 +5,7 @@ import {
   getDevEventById,
   createDevEvent,
   updateDevEvent,
+  transitionDevEventStatus,
   getDevDashboard,
 } from "@/lib/dev/store";
 import { isBackendConfigured } from "@/lib/nhost";
@@ -15,13 +16,13 @@ import type {
   Event,
   CreateEventInput,
   UpdateEventInput,
+  EventStatus,
   DashboardStats,
 } from "@/lib/types";
 
 export async function getEvents(): Promise<Event[]> {
   if (isDevMode()) return getDevEvents();
   if (!isBackendConfigured()) return [];
-
   const data = await executeGraphQL<{ events: Event[] }>(GET_EVENTS);
   return data.events;
 }
@@ -29,7 +30,6 @@ export async function getEvents(): Promise<Event[]> {
 export async function getEventById(id: string): Promise<Event | null> {
   if (isDevMode()) return getDevEventById(id);
   if (!isBackendConfigured()) return null;
-
   const data = await executeGraphQL<{ events_by_pk: Event | null }>(
     GET_EVENT_BY_ID,
     { id }
@@ -39,7 +39,6 @@ export async function getEventById(id: string): Promise<Event | null> {
 
 export async function createEvent(input: CreateEventInput): Promise<Event> {
   if (isDevMode()) return createDevEvent(input);
-
   const data = await executeGraphQL<{ insert_events_one: Event }>(
     INSERT_EVENT,
     { object: { ...input, status: "draft" } }
@@ -52,7 +51,6 @@ export async function updateEvent(
   input: UpdateEventInput
 ): Promise<Event> {
   if (isDevMode()) return updateDevEvent(id, input);
-
   const data = await executeGraphQL<{ update_events_by_pk: Event }>(
     UPDATE_EVENT,
     { id, set: input }
@@ -60,19 +58,28 @@ export async function updateEvent(
   return data.update_events_by_pk;
 }
 
+export async function transitionEventStatus(
+  id: string,
+  status: EventStatus
+): Promise<Event> {
+  if (isDevMode()) return transitionDevEventStatus(id, status);
+  return updateEvent(id, { status });
+}
+
 export async function getDashboardStats(): Promise<DashboardStats> {
   if (isDevMode()) {
     const config = getDevDashboard();
     return {
       activeEventsToday: config.activeEventsToday,
-      totalUploadsToday: config.totalUploadsToday,
-      liveSessionsOnline: config.liveSessionsOnline,
+      uploadsThisWeek: config.uploadsThisWeek,
+      clientsOnboarded: config.clientsOnboarded,
+      reelsDelivered: config.reelsDelivered,
     };
   }
-
   return {
     activeEventsToday: 0,
-    totalUploadsToday: 0,
-    liveSessionsOnline: 0,
+    uploadsThisWeek: 0,
+    clientsOnboarded: 0,
+    reelsDelivered: 0,
   };
 }

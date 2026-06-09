@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wedding Capture — Admin",
-  description: "Admin panel for managing wedding capture events",
+  title: "Memo — Admin",
+  description: "Memo admin panel — CRM and operational management for live events",
 };
 
 export default function RootLayout({

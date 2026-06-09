@@ -1,12 +1,16 @@
-import { PageHeader } from "@/components/shared/page-header";
+import { EntityHeader } from "@/components/shared/entity-header";
 import { ClientForm } from "../_components/client-form";
 
 export default function NewClientPage() {
   return (
     <div className="space-y-6">
-      <PageHeader
+      <EntityHeader
+        breadcrumbs={[
+          { label: "Clients", href: "/admin/clients" },
+          { label: "New client" },
+        ]}
         title="New client"
-        description="Add a new couple or event owner."
+        description="Create a client account and send a portal invitation."
       />
       <ClientForm />
     </div>

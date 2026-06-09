@@ -9,8 +9,9 @@ const dashboardSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   activeEventsToday: z.coerce.number().int().min(0),
-  totalUploadsToday: z.coerce.number().int().min(0),
-  liveSessionsOnline: z.coerce.number().int().min(0),
+  uploadsThisWeek: z.coerce.number().int().min(0),
+  clientsOnboarded: z.coerce.number().int().min(0),
+  reelsDelivered: z.coerce.number().int().min(0),
 });
 
 export type DashboardFormState = {

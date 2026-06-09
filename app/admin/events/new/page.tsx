@@ -1,5 +1,6 @@
+import { Suspense } from "react";
 import { getClients } from "@/lib/data/clients";
-import { PageHeader } from "@/components/shared/page-header";
+import { EntityHeader } from "@/components/shared/entity-header";
 import { EventForm } from "../_components/event-form";
 
 export default async function NewEventPage() {
@@ -7,11 +8,17 @@ export default async function NewEventPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <EntityHeader
+        breadcrumbs={[
+          { label: "Events", href: "/admin/events" },
+          { label: "Create event" },
+        ]}
         title="Create event"
-        description="Set up a new wedding event and generate a QR code."
+        description="Configure basics and branding, then set up challenges from the event workspace."
       />
-      <EventForm clients={clients} />
+      <Suspense fallback={<div className="text-sm text-muted-foreground">Loading…</div>}>
+        <EventForm clients={clients} />
+      </Suspense>
     </div>
   );
 }

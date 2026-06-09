@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays,
-  Camera,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -32,11 +31,22 @@ import {
 import { cn } from "@/lib/utils";
 import type { AuthSession } from "@/lib/types";
 
-const NAV_ITEMS = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Clients", href: "/admin/clients", icon: Users },
-  { label: "Events", href: "/admin/events", icon: CalendarDays },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
+const NAV_GROUPS = [
+  {
+    label: "Operations",
+    items: [
+      { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+      { label: "Events", href: "/admin/events", icon: CalendarDays },
+    ],
+  },
+  {
+    label: "CRM",
+    items: [{ label: "Clients", href: "/admin/clients", icon: Users }],
+  },
+  {
+    label: "System",
+    items: [{ label: "Settings", href: "/admin/settings", icon: Settings }],
+  },
 ] as const;
 
 interface AdminTopBarProps {
@@ -68,39 +78,44 @@ export function AdminTopBar({ user }: AdminTopBarProps) {
           />
           <SheetContent side="left" className="w-64 p-0">
             <SheetHeader className="border-b p-4">
-              <SheetTitle className="flex items-center gap-2">
-                <Camera className="h-5 w-5" />
-                Wedding Capture
+              <SheetTitle className="text-xl font-semibold tracking-tight">
+                Memo
               </SheetTitle>
             </SheetHeader>
-            <nav className="flex flex-col gap-1 p-4">
-              {NAV_ITEMS.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  pathname.startsWith(`${item.href}/`);
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-accent text-accent-foreground"
-                        : "hover:bg-accent/50"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
+            <nav className="flex flex-col gap-4 p-4">
+              {NAV_GROUPS.map((group) => (
+                <div key={group.label} className="space-y-1">
+                  <p className="px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {group.label}
+                  </p>
+                  {group.items.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      pathname.startsWith(`${item.href}/`);
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-accent text-accent-foreground"
+                            : "hover:bg-accent/50"
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
             </nav>
           </SheetContent>
         </Sheet>
-        <span className="font-semibold">Wedding Capture</span>
+        <span className="text-xl font-semibold tracking-tight">Memo</span>
       </div>
 
       <div className="hidden lg:block" />

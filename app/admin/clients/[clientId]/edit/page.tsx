@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getClientById } from "@/lib/data/clients";
-import { PageHeader } from "@/components/shared/page-header";
+import { EntityHeader } from "@/components/shared/entity-header";
 import { ClientForm } from "../../_components/client-form";
 
 interface Props {
@@ -15,7 +15,12 @@ export default async function EditClientPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <EntityHeader
+        breadcrumbs={[
+          { label: "Clients", href: "/admin/clients" },
+          { label: client.name, href: `/admin/clients/${clientId}` },
+          { label: "Edit" },
+        ]}
         title="Edit client"
         description={`Update details for ${client.name}.`}
       />

@@ -6,6 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Users } from "lucide-react";
 import { DataTable } from "@/components/shared/data-table/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ClientStatusBadge } from "@/components/shared/status-badge";
 import { formatDate } from "@/lib/utils/format";
 import type { Client } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,6 @@ import {
 
 function ClientActions({ clientId }: { clientId: string }) {
   const router = useRouter();
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -32,9 +32,7 @@ function ClientActions({ clientId }: { clientId: string }) {
         <DropdownMenuItem onClick={() => router.push(`/admin/clients/${clientId}`)}>
           View
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => router.push(`/admin/clients/${clientId}/edit`)}
-        >
+        <DropdownMenuItem onClick={() => router.push(`/admin/clients/${clientId}/edit`)}>
           Edit
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -56,21 +54,29 @@ const columns: ColumnDef<Client>[] = [
     ),
   },
   {
+    accessorKey: "organisation",
+    header: "Organisation",
+    cell: ({ row }) => row.original.organisation ?? "—",
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => <ClientStatusBadge status={row.original.status} />,
+  },
+  {
+    accessorKey: "event_type_preference",
+    header: "Event type",
+    cell: ({ row }) => row.original.event_type_preference ?? "—",
+  },
+  {
     accessorKey: "email",
     header: "Email",
   },
   {
-    accessorKey: "phone",
-    header: "Phone",
-    cell: ({ row }) => row.original.phone ?? "—",
-  },
-  {
     accessorKey: "wedding_date",
-    header: "Wedding date",
+    header: "Key date",
     cell: ({ row }) =>
-      row.original.wedding_date
-        ? formatDate(row.original.wedding_date)
-        : "—",
+      row.original.wedding_date ? formatDate(row.original.wedding_date) : "—",
   },
   {
     id: "actions",
@@ -88,7 +94,7 @@ export function ClientTable({ clients }: ClientTableProps) {
       <EmptyState
         icon={Users}
         title="No clients yet"
-        description="Create your first client profile to start managing wedding events."
+        description="Create your first client to start onboarding events."
         action={{ label: "Add client", href: "/admin/clients/new" }}
       />
     );

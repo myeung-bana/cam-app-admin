@@ -6,7 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CalendarDays, MoreHorizontal } from "lucide-react";
 import { DataTable } from "@/components/shared/data-table/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { EventStatusBadge } from "@/components/shared/status-badge";
 import { formatDateTime } from "@/lib/utils/format";
 import type { Event } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,11 @@ function EventActions({ eventId }: { eventId: string }) {
         >
           Media gallery
         </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => router.push(`/admin/events/${eventId}/live`)}
+        >
+          Live dashboard
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -62,9 +67,16 @@ const columns: ColumnDef<Event>[] = [
     cell: ({ row }) => row.original.client.name,
   },
   {
+    accessorKey: "event_type",
+    header: "Type",
+    cell: ({ row }) => (
+      <span className="capitalize">{row.original.event_type}</span>
+    ),
+  },
+  {
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    cell: ({ row }) => <EventStatusBadge status={row.original.status} />,
   },
   {
     accessorKey: "start_time",

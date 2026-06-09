@@ -11,7 +11,7 @@ export default async function ClientsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Clients"
-        description="Manage couples and event owners."
+        description="Onboard clients, manage portal access, and track event history."
       >
         <Link href="/admin/clients/new" className={buttonVariants()}>
           Add client

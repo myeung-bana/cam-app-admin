@@ -5,6 +5,8 @@ import {
   getDevClientById,
   createDevClient,
   updateDevClient,
+  archiveDevClient,
+  getDevEventsByClientId,
 } from "@/lib/dev/store";
 import { isBackendConfigured } from "@/lib/nhost";
 import { executeGraphQL } from "@/lib/graphql/execute";
@@ -17,12 +19,12 @@ import type {
   Client,
   CreateClientInput,
   UpdateClientInput,
+  Event,
 } from "@/lib/types";
 
 export async function getClients(): Promise<Client[]> {
   if (isDevMode()) return getDevClients();
   if (!isBackendConfigured()) return [];
-
   const data = await executeGraphQL<{ clients: Client[] }>(GET_CLIENTS);
   return data.clients;
 }
@@ -30,7 +32,6 @@ export async function getClients(): Promise<Client[]> {
 export async function getClientById(id: string): Promise<Client | null> {
   if (isDevMode()) return getDevClientById(id);
   if (!isBackendConfigured()) return null;
-
   const data = await executeGraphQL<{ clients_by_pk: Client | null }>(
     GET_CLIENT_BY_ID,
     { id }
@@ -38,9 +39,13 @@ export async function getClientById(id: string): Promise<Client | null> {
   return data.clients_by_pk;
 }
 
+export async function getClientEvents(clientId: string): Promise<Event[]> {
+  if (isDevMode()) return getDevEventsByClientId(clientId);
+  return [];
+}
+
 export async function createClient(input: CreateClientInput): Promise<Client> {
   if (isDevMode()) return createDevClient(input);
-
   const data = await executeGraphQL<{ insert_clients_one: Client }>(
     INSERT_CLIENT,
     { object: input }
@@ -53,10 +58,14 @@ export async function updateClient(
   input: UpdateClientInput
 ): Promise<Client> {
   if (isDevMode()) return updateDevClient(id, input);
-
   const data = await executeGraphQL<{ update_clients_by_pk: Client }>(
     UPDATE_CLIENT,
     { id, set: input }
   );
   return data.update_clients_by_pk;
+}
+
+export async function archiveClient(id: string): Promise<Client> {
+  if (isDevMode()) return archiveDevClient(id);
+  return updateClient(id, { archived: true, status: "archived" });
 }

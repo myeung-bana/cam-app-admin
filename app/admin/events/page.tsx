@@ -11,7 +11,7 @@ export default async function EventsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Events"
-        description="Manage all wedding events."
+        description="Configure, operate, and deliver events across all clients."
       >
         <Link href="/admin/events/new" className={buttonVariants()}>
           Create event

@@ -1,19 +1,24 @@
-import { CalendarDays, Image, Users } from "lucide-react";
-import { getDashboardConfig } from "@/lib/data/dashboard";
+import {
+  CalendarDays,
+  Clapperboard,
+  Image,
+  Users,
+} from "lucide-react";
+import { getDashboardConfig, getUpcomingEvents, getRecentActivity } from "@/lib/data/dashboard";
 import { isDevMode } from "@/lib/dev/config";
 import { isBackendConfigured } from "@/lib/nhost";
 import { PageHeader } from "@/components/shared/page-header";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { MetricCard } from "@/components/shared/metric-card";
+import { UpcomingEventsTable } from "@/components/shared/upcoming-events-table";
+import { ActivityFeed } from "@/components/shared/activity-feed";
 import { DashboardEditor } from "./_components/dashboard-editor";
 
 export default async function DashboardPage() {
-  const config = await getDashboardConfig();
+  const [config, upcoming, activity] = await Promise.all([
+    getDashboardConfig(),
+    getUpcomingEvents(7),
+    getRecentActivity(10),
+  ]);
   const devMode = isDevMode();
   const backendReady = isBackendConfigured();
 
@@ -21,20 +26,26 @@ export default async function DashboardPage() {
     {
       title: "Active events today",
       value: config.activeEventsToday,
-      description: "Events currently in progress",
+      description: "Events currently live",
       icon: CalendarDays,
     },
     {
-      title: "Uploads today",
-      value: config.totalUploadsToday,
+      title: "Uploads this week",
+      value: config.uploadsThisWeek,
       description: "Photos and videos uploaded",
       icon: Image,
     },
     {
-      title: "Live sessions",
-      value: config.liveSessionsOnline,
-      description: "Guests online right now",
+      title: "Clients onboarded",
+      value: config.clientsOnboarded,
+      description: "Total active client accounts",
       icon: Users,
+    },
+    {
+      title: "Reels delivered",
+      value: config.reelsDelivered,
+      description: "Published to client portals",
+      icon: Clapperboard,
     },
   ];
 
@@ -46,42 +57,28 @@ export default async function DashboardPage() {
 
       {devMode && (
         <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 text-sm text-amber-900">
-          You are in dev mode with seeded mock data. Use{" "}
-          <strong>Edit dashboard</strong> to change the heading and metrics.
-          Client and event forms also persist to{" "}
-          <code className="rounded bg-amber-100 px-1">.data/dev-store.json</code>.
+          Memo dev mode — mock data persisted to{" "}
+          <code className="rounded bg-amber-100 px-1">.data/dev-store.json</code>
         </div>
       )}
 
       {!devMode && !backendReady && (
         <div className="rounded-lg border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground">
-          Nhost is not configured yet. Copy{" "}
-          <code className="rounded bg-muted px-1">.env.example</code> to{" "}
-          <code className="rounded bg-muted px-1">.env.local</code> and add
-          your project credentials from cam-app-nhost.
+          Connect Nhost or enable dev mode to load live data.
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {metrics.map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <Card key={metric.title}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {metric.title}
-                </CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{metric.value}</div>
-                <CardDescription className="mt-1">
-                  {metric.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => (
+          <MetricCard key={metric.title} {...metric} />
+        ))}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <UpcomingEventsTable events={upcoming} />
+        </div>
+        <ActivityFeed entries={activity} />
       </div>
     </div>
   );

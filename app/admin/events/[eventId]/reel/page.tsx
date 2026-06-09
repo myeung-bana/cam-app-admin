@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { Film } from "lucide-react";
 import { getEventById } from "@/lib/data/events";
-import { PageHeader } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { getEventReel } from "@/lib/data/reels";
+import { EntityHeader } from "@/components/shared/entity-header";
+import { EventStatusBadge } from "@/components/shared/status-badge";
 import { EventNav } from "@/components/shared/event-nav";
+import { ReelPanel } from "../../_components/reel-panel";
 
 interface Props {
   params: Promise<{ eventId: string }>;
@@ -12,23 +12,29 @@ interface Props {
 
 export default async function EventReelPage({ params }: Props) {
   const { eventId } = await params;
-  const event = await getEventById(eventId);
+  const [event, reel] = await Promise.all([
+    getEventById(eventId),
+    getEventReel(eventId),
+  ]);
 
   if (!event) notFound();
 
   return (
     <div className="space-y-6">
-      <PageHeader title={event.name} description="AI highlight reel">
-        <StatusBadge status={event.status} />
-      </PageHeader>
-
-      <EventNav eventId={eventId} />
-
-      <EmptyState
-        icon={Film}
-        title="No reel generated"
-        description="After the event ends, generate an AI-powered highlight reel from guest uploads."
+      <EntityHeader
+        breadcrumbs={[
+          { label: "Events", href: "/admin/events" },
+          { label: event.name, href: `/admin/events/${eventId}` },
+          { label: "Reel" },
+        ]}
+        title={event.name}
+        badge={<EventStatusBadge status={event.status} />}
+        description="AI highlight reel"
       />
+
+      <EventNav eventId={eventId} status={event.status} />
+
+      <ReelPanel event={event} reel={reel} />
     </div>
   );
 }

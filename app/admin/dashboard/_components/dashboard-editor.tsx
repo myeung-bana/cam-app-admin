@@ -29,11 +29,8 @@ export function DashboardEditor({ config }: DashboardEditorProps) {
   );
 
   useEffect(() => {
-    if (state.success) {
-      toast.success("Dashboard updated");
-    } else if (state.error) {
-      toast.error(state.error);
-    }
+    if (state.success) toast.success("Dashboard updated");
+    else if (state.error) toast.error(state.error);
   }, [state]);
 
   return (
@@ -50,19 +47,13 @@ export function DashboardEditor({ config }: DashboardEditorProps) {
         <DialogHeader>
           <DialogTitle>Edit dashboard</DialogTitle>
           <DialogDescription>
-            Update the page heading and metric values. Changes are saved locally
-            in dev mode.
+            Update platform metrics and page heading (dev mode).
           </DialogDescription>
         </DialogHeader>
         <form action={formAction} className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="title">Page title</Label>
-            <Input
-              id="title"
-              name="title"
-              defaultValue={config.title}
-              required
-            />
+            <Input id="title" name="title" defaultValue={config.title} required />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="description">Description</Label>
@@ -73,38 +64,51 @@ export function DashboardEditor({ config }: DashboardEditorProps) {
               required
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="activeEventsToday">Active events today</Label>
-            <Input
-              id="activeEventsToday"
-              name="activeEventsToday"
-              type="number"
-              min={0}
-              defaultValue={config.activeEventsToday}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="totalUploadsToday">Uploads today</Label>
-            <Input
-              id="totalUploadsToday"
-              name="totalUploadsToday"
-              type="number"
-              min={0}
-              defaultValue={config.totalUploadsToday}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="liveSessionsOnline">Live sessions</Label>
-            <Input
-              id="liveSessionsOnline"
-              name="liveSessionsOnline"
-              type="number"
-              min={0}
-              defaultValue={config.liveSessionsOnline}
-              required
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="activeEventsToday">Active events today</Label>
+              <Input
+                id="activeEventsToday"
+                name="activeEventsToday"
+                type="number"
+                min={0}
+                defaultValue={config.activeEventsToday}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="uploadsThisWeek">Uploads this week</Label>
+              <Input
+                id="uploadsThisWeek"
+                name="uploadsThisWeek"
+                type="number"
+                min={0}
+                defaultValue={config.uploadsThisWeek}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="clientsOnboarded">Clients onboarded</Label>
+              <Input
+                id="clientsOnboarded"
+                name="clientsOnboarded"
+                type="number"
+                min={0}
+                defaultValue={config.clientsOnboarded}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="reelsDelivered">Reels delivered</Label>
+              <Input
+                id="reelsDelivered"
+                name="reelsDelivered"
+                type="number"
+                min={0}
+                defaultValue={config.reelsDelivered}
+                required
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending}>

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { clientSchema, type ClientInput } from "@/lib/schemas/client.schema";
@@ -14,11 +14,29 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
+
+const EVENT_TYPES = [
+  { value: "wedding", label: "Wedding" },
+  { value: "birthday", label: "Birthday" },
+  { value: "corporate", label: "Corporate" },
+  { value: "milestone", label: "Life milestone" },
+  { value: "social", label: "Social / private" },
+  { value: "community", label: "Community" },
+  { value: "other", label: "Other" },
+] as const;
 
 const IS_DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
@@ -34,17 +52,23 @@ export function ClientForm({ client }: ClientFormProps) {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ClientInput>({
-    resolver: zodResolver(clientSchema),
+    resolver: zodResolver(clientSchema) as Resolver<ClientInput>,
     defaultValues: {
       name: client?.name ?? "",
       email: client?.email ?? "",
+      organisation: client?.organisation ?? "",
       phone: client?.phone ?? "",
       wedding_date: client?.wedding_date ?? "",
+      event_type_preference: client?.event_type_preference ?? undefined,
       notes: client?.notes ?? "",
     },
   });
+
+  const eventType = watch("event_type_preference");
 
   function onSubmit(values: ClientInput) {
     if (!IS_DEV_MODE) {
@@ -84,12 +108,14 @@ export function ClientForm({ client }: ClientFormProps) {
             )}
           </div>
           <div className="grid gap-2">
+            <Label htmlFor="organisation">Organisation</Label>
+            <Input id="organisation" {...register("organisation")} />
+          </div>
+          <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" {...register("email")} />
             {errors.email && (
-              <p className="text-sm text-destructive">
-                {errors.email.message}
-              </p>
+              <p className="text-sm text-destructive">{errors.email.message}</p>
             )}
           </div>
           <div className="grid gap-2">
@@ -97,27 +123,39 @@ export function ClientForm({ client }: ClientFormProps) {
             <Input id="phone" type="tel" {...register("phone")} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="wedding_date">Wedding date</Label>
+            <Label>Event type preference</Label>
+            <Select
+              value={eventType ?? ""}
+              onValueChange={(v) => {
+                if (v) setValue("event_type_preference", v as ClientInput["event_type_preference"]);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select event type" />
+              </SelectTrigger>
+              <SelectContent>
+                {EVENT_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="wedding_date">Key date (optional)</Label>
             <Input id="wedding_date" type="date" {...register("wedding_date")} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Input id="notes" {...register("notes")} />
+            <Label htmlFor="notes">Internal notes</Label>
+            <Textarea id="notes" rows={3} {...register("notes")} />
           </div>
         </CardContent>
         <CardFooter className="flex gap-2">
           <Button type="submit" disabled={isPending}>
-            {isPending
-              ? "Saving…"
-              : isEditing
-                ? "Save changes"
-                : "Create client"}
+            {isPending ? "Saving…" : isEditing ? "Save changes" : "Create client"}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
+          <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>
         </CardFooter>

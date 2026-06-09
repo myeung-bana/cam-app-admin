@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { Trophy } from "lucide-react";
 import { getEventById } from "@/lib/data/events";
-import { PageHeader } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { getEventChallenges } from "@/lib/data/challenges";
+import { EntityHeader } from "@/components/shared/entity-header";
+import { EventStatusBadge } from "@/components/shared/status-badge";
 import { EventNav } from "@/components/shared/event-nav";
+import { ChallengeBuilder } from "@/components/shared/challenge-builder";
 
 interface Props {
   params: Promise<{ eventId: string }>;
@@ -12,22 +12,32 @@ interface Props {
 
 export default async function EventChallengesPage({ params }: Props) {
   const { eventId } = await params;
-  const event = await getEventById(eventId);
+  const [event, challenges] = await Promise.all([
+    getEventById(eventId),
+    getEventChallenges(eventId),
+  ]);
 
   if (!event) notFound();
 
   return (
     <div className="space-y-6">
-      <PageHeader title={event.name} description="Event challenges">
-        <StatusBadge status={event.status} />
-      </PageHeader>
+      <EntityHeader
+        breadcrumbs={[
+          { label: "Events", href: "/admin/events" },
+          { label: event.name, href: `/admin/events/${eventId}` },
+          { label: "Challenges" },
+        ]}
+        title={event.name}
+        badge={<EventStatusBadge status={event.status} />}
+        description="Photo challenges for guests"
+      />
 
-      <EventNav eventId={eventId} />
+      <EventNav eventId={eventId} status={event.status} />
 
-      <EmptyState
-        icon={Trophy}
-        title="No challenges configured"
-        description="Add photo challenges for guests to complete during the event."
+      <ChallengeBuilder
+        eventId={eventId}
+        eventType={event.event_type}
+        initialChallenges={challenges}
       />
     </div>
   );
