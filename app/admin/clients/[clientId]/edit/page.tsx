@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getClientById } from "@/lib/data/clients";
+import { getEventTypeOptions } from "@/lib/data/taxonomy";
 import { EntityHeader } from "@/components/shared/entity-header";
 import { ClientForm } from "../../_components/client-form";
 
@@ -9,7 +10,10 @@ interface Props {
 
 export default async function EditClientPage({ params }: Props) {
   const { clientId } = await params;
-  const client = await getClientById(clientId);
+  const [client, eventTypeOptions] = await Promise.all([
+    getClientById(clientId),
+    getEventTypeOptions(),
+  ]);
 
   if (!client) notFound();
 
@@ -24,7 +28,7 @@ export default async function EditClientPage({ params }: Props) {
         title="Edit client"
         description={`Update details for ${client.name}.`}
       />
-      <ClientForm client={client} />
+      <ClientForm client={client} eventTypeOptions={eventTypeOptions} />
     </div>
   );
 }

@@ -27,23 +27,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-const EVENT_TYPES = [
-  { value: "wedding", label: "Wedding" },
-  { value: "birthday", label: "Birthday" },
-  { value: "corporate", label: "Corporate" },
-  { value: "milestone", label: "Life milestone" },
-  { value: "social", label: "Social / private" },
-  { value: "community", label: "Community" },
-  { value: "other", label: "Other" },
-] as const;
+import type { TaxonomyOption } from "@/lib/data/taxonomy";
 
 const IS_DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
 interface EventFormProps {
   clients: Client[];
+  eventTypeOptions: TaxonomyOption[];
 }
 
-export function EventForm({ clients }: EventFormProps) {
+export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedClient = searchParams.get("clientId") ?? clients[0]?.id;
@@ -62,7 +55,7 @@ export function EventForm({ clients }: EventFormProps) {
     defaultValues: {
       max_attendees: 150,
       client_id: preselectedClient,
-      event_type: "wedding",
+      event_type: eventTypeOptions[0]?.value ?? "wedding",
       accent_color: "#6366f1",
     },
   });
@@ -153,14 +146,14 @@ export function EventForm({ clients }: EventFormProps) {
                 <Select
                   value={eventType}
                   onValueChange={(value) => {
-                    if (value) setValue("event_type", value as EventInput["event_type"]);
+                    if (value) setValue("event_type", value);
                   }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {EVENT_TYPES.map((t) => (
+                    {eventTypeOptions.map((t) => (
                       <SelectItem key={t.value} value={t.value}>
                         {t.label}
                       </SelectItem>

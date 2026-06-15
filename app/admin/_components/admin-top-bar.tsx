@@ -1,17 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import {
-  CalendarDays,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Settings,
-  Users,
-} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LogOut, Menu } from "lucide-react";
 import { useSignOut } from "@nhost/nextjs";
+import { cn } from "@/lib/utils";
+import type { AuthSession } from "@/lib/types";
+import { AdminNavItems } from "./admin-nav-items";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,33 +23,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
-import type { AuthSession } from "@/lib/types";
-
-const NAV_GROUPS = [
-  {
-    label: "Operations",
-    items: [
-      { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-      { label: "Events", href: "/admin/events", icon: CalendarDays },
-    ],
-  },
-  {
-    label: "CRM",
-    items: [{ label: "Clients", href: "/admin/clients", icon: Users }],
-  },
-  {
-    label: "System",
-    items: [{ label: "Settings", href: "/admin/settings", icon: Settings }],
-  },
-] as const;
 
 interface AdminTopBarProps {
   user: AuthSession["user"];
 }
 
 export function AdminTopBar({ user }: AdminTopBarProps) {
-  const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useSignOut();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -82,36 +56,26 @@ export function AdminTopBar({ user }: AdminTopBarProps) {
                 Memo
               </SheetTitle>
             </SheetHeader>
-            <nav className="flex flex-col gap-4 p-4">
-              {NAV_GROUPS.map((group) => (
-                <div key={group.label} className="space-y-1">
-                  <p className="px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    {group.label}
-                  </p>
-                  {group.items.map((item) => {
-                    const isActive =
-                      pathname === item.href ||
-                      pathname.startsWith(`${item.href}/`);
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                          isActive
-                            ? "bg-accent text-accent-foreground"
-                            : "hover:bg-accent/50"
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              ))}
+            <nav className="p-4">
+              <AdminNavItems
+                onNavigate={() => setMobileOpen(false)}
+                linkClassName={(active) =>
+                  cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-accent text-accent-foreground"
+                      : "hover:bg-accent/50"
+                  )
+                }
+                subLinkClassName={(active) =>
+                  cn(
+                    "flex items-center rounded-md px-3 py-1.5 text-sm transition-colors",
+                    active
+                      ? "bg-accent font-medium text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50"
+                  )
+                }
+              />
             </nav>
           </SheetContent>
         </Sheet>

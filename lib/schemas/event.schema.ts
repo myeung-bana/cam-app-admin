@@ -1,20 +1,10 @@
 import { z } from "zod";
 
-const eventTypes = [
-  "wedding",
-  "birthday",
-  "corporate",
-  "milestone",
-  "social",
-  "community",
-  "other",
-] as const;
-
 export const eventSchema = z
   .object({
     name: z.string().min(2, "Event name is required"),
     client_id: z.string().uuid("A client must be selected"),
-    event_type: z.enum(eventTypes),
+    event_type: z.string().min(1, "Event type is required"),
     start_time: z.string().min(1, "Start time is required"),
     end_time: z.string().min(1, "End time is required"),
     venue_name: z.string().optional(),

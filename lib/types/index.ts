@@ -4,15 +4,58 @@ export type ClientStatus =
   | "portal_active"
   | "event_completed"
   | "archived";
-export type EventType =
-  | "wedding"
-  | "birthday"
-  | "corporate"
-  | "milestone"
-  | "social"
-  | "community"
-  | "other";
+export type EventType = string;
+export type TaxonomyKind = "event-types" | "challenges";
+
+export interface TaxonomyItemBase {
+  id: string;
+  slug: string;
+  label: string;
+  description: string | null;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface EventTypeTaxonomy extends TaxonomyItemBase {
+  kind: "event-types";
+}
+
+export interface ChallengeTaxonomy extends TaxonomyItemBase {
+  kind: "challenges";
+  icon: string;
+  is_required: boolean;
+  event_type_slug: string | null;
+}
+
+export type TaxonomyItem = EventTypeTaxonomy | ChallengeTaxonomy;
+
+export interface CreateEventTypeTaxonomyInput {
+  slug: string;
+  label: string;
+  description?: string;
+  sort_order?: number;
+  active?: boolean;
+}
+
+export type UpdateEventTypeTaxonomyInput = Partial<CreateEventTypeTaxonomyInput>;
+
+export interface CreateChallengeTaxonomyInput {
+  slug: string;
+  label: string;
+  description?: string;
+  icon?: string;
+  is_required?: boolean;
+  event_type_slug?: string | null;
+  sort_order?: number;
+  active?: boolean;
+}
+
+export type UpdateChallengeTaxonomyInput = Partial<CreateChallengeTaxonomyInput>;
 export type ReelStatus = "queued" | "processing" | "ready" | "failed";
+export type AdminUserStatus = "active" | "inactive";
+export type AdminUserRole = "owner" | "admin";
 
 export interface Client {
   id: string;
@@ -98,6 +141,31 @@ export interface ActivityLogEntry {
   label: string;
   entity_ref: string | null;
   created_at: string;
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: AdminUserRole;
+  status: AdminUserStatus;
+  phone: string | null;
+  notes: string | null;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface CreateAdminUserInput {
+  name: string;
+  email: string;
+  role?: AdminUserRole;
+  phone?: string;
+  notes?: string;
+}
+
+export interface UpdateAdminUserInput extends Partial<CreateAdminUserInput> {
+  status?: AdminUserStatus;
 }
 
 export interface AuthSession {

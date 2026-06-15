@@ -15,6 +15,15 @@ import type {
   Reel,
   ActivityLogEntry,
   EventStatus,
+  AdminUser,
+  CreateAdminUserInput,
+  UpdateAdminUserInput,
+  EventTypeTaxonomy,
+  ChallengeTaxonomy,
+  CreateEventTypeTaxonomyInput,
+  UpdateEventTypeTaxonomyInput,
+  CreateChallengeTaxonomyInput,
+  UpdateChallengeTaxonomyInput,
 } from "@/lib/types";
 import {
   SEED_CLIENTS,
@@ -24,7 +33,9 @@ import {
   SEED_MEDIA,
   SEED_REELS,
   SEED_ACTIVITY,
-  CHALLENGE_TEMPLATES,
+  SEED_ADMIN_USERS,
+  SEED_EVENT_TYPE_TAXONOMY,
+  SEED_CHALLENGE_TAXONOMY,
 } from "./seed";
 
 interface DevStoreData {
@@ -35,6 +46,9 @@ interface DevStoreData {
   media: Media[];
   reels: Reel[];
   activity: ActivityLogEntry[];
+  adminUsers: AdminUser[];
+  eventTypeTaxonomy: EventTypeTaxonomy[];
+  challengeTaxonomy: ChallengeTaxonomy[];
 }
 
 const STORE_DIR = join(process.cwd(), ".data");
@@ -49,6 +63,9 @@ function defaultStore(): DevStoreData {
     media: SEED_MEDIA.map((m) => ({ ...m })),
     reels: SEED_REELS.map((r) => ({ ...r })),
     activity: SEED_ACTIVITY.map((a) => ({ ...a })),
+    adminUsers: SEED_ADMIN_USERS.map((u) => ({ ...u })),
+    eventTypeTaxonomy: SEED_EVENT_TYPE_TAXONOMY.map((t) => ({ ...t })),
+    challengeTaxonomy: SEED_CHALLENGE_TAXONOMY.map((t) => ({ ...t })),
   };
 }
 
@@ -66,6 +83,9 @@ function readStore(): DevStoreData {
       media: parsed.media ?? defaults.media,
       reels: parsed.reels ?? defaults.reels,
       activity: parsed.activity ?? defaults.activity,
+      adminUsers: parsed.adminUsers ?? defaults.adminUsers,
+      eventTypeTaxonomy: parsed.eventTypeTaxonomy ?? defaults.eventTypeTaxonomy,
+      challengeTaxonomy: parsed.challengeTaxonomy ?? defaults.challengeTaxonomy,
     };
   } catch {
     return defaultStore();
@@ -276,13 +296,28 @@ export function loadChallengeTemplate(
   eventId: string,
   eventType: string
 ): Challenge[] {
-  const template = CHALLENGE_TEMPLATES[eventType] ?? CHALLENGE_TEMPLATES.wedding;
+  const store = readStore();
+  const template = store.challengeTaxonomy
+    .filter(
+      (t) =>
+        t.active &&
+        (t.event_type_slug === eventType || t.event_type_slug === null)
+    )
+    .sort((a, b) => a.sort_order - b.sort_order);
+
+  const fallback =
+    template.length > 0
+      ? template
+      : store.challengeTaxonomy
+          .filter((t) => t.active && t.event_type_slug === "wedding")
+          .sort((a, b) => a.sort_order - b.sort_order);
+
   return saveDevChallenges(
     eventId,
-    template.map((t, i) => ({
+    fallback.map((t, i) => ({
       id: randomUUID(),
-      title: t.title,
-      description: t.description,
+      title: t.label,
+      description: t.description ?? "",
       icon: t.icon,
       is_required: t.is_required,
       sort_order: i,
@@ -357,4 +392,153 @@ export function publishDevReel(eventId: string): Reel {
 // Activity
 export function getDevActivity(limit = 10): ActivityLogEntry[] {
   return readStore().activity.slice(0, limit);
+}
+
+// Admin users
+export function getDevAdminUsers(): AdminUser[] {
+  return readStore().adminUsers;
+}
+
+export function getDevAdminUserById(id: string): AdminUser | null {
+  return readStore().adminUsers.find((u) => u.id === id) ?? null;
+}
+
+export function createDevAdminUser(input: CreateAdminUserInput): AdminUser {
+  const store = readStore();
+  const user: AdminUser = {
+    id: randomUUID(),
+    name: input.name,
+    email: input.email,
+    role: input.role ?? "admin",
+    status: "active",
+    phone: input.phone ?? null,
+    notes: input.notes ?? null,
+    last_login_at: null,
+    created_at: new Date().toISOString(),
+  };
+  store.adminUsers.push(user);
+  writeStore(store);
+  logActivity("admin_user_created", `Admin user ${user.name} invited`, user.id);
+  return user;
+}
+
+export function updateDevAdminUser(
+  id: string,
+  input: UpdateAdminUserInput
+): AdminUser {
+  const store = readStore();
+  const index = store.adminUsers.findIndex((u) => u.id === id);
+  if (index === -1) throw new Error("Admin user not found");
+  store.adminUsers[index] = {
+    ...store.adminUsers[index],
+    ...input,
+    updated_at: new Date().toISOString(),
+  };
+  writeStore(store);
+  return store.adminUsers[index];
+}
+
+// Taxonomy — event types
+export function getDevEventTypeTaxonomy(): EventTypeTaxonomy[] {
+  return readStore()
+    .eventTypeTaxonomy.filter((t) => t.active)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function getDevAllEventTypeTaxonomy(): EventTypeTaxonomy[] {
+  return readStore()
+    .eventTypeTaxonomy.sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function getDevEventTypeTaxonomyById(
+  id: string
+): EventTypeTaxonomy | null {
+  return readStore().eventTypeTaxonomy.find((t) => t.id === id) ?? null;
+}
+
+export function createDevEventTypeTaxonomy(
+  input: CreateEventTypeTaxonomyInput
+): EventTypeTaxonomy {
+  const store = readStore();
+  const item: EventTypeTaxonomy = {
+    id: randomUUID(),
+    kind: "event-types",
+    slug: input.slug,
+    label: input.label,
+    description: input.description ?? null,
+    sort_order: input.sort_order ?? store.eventTypeTaxonomy.length,
+    active: input.active ?? true,
+    created_at: new Date().toISOString(),
+  };
+  store.eventTypeTaxonomy.push(item);
+  writeStore(store);
+  logActivity("taxonomy_created", `Event type ${item.label} created`, item.id);
+  return item;
+}
+
+export function updateDevEventTypeTaxonomy(
+  id: string,
+  input: UpdateEventTypeTaxonomyInput
+): EventTypeTaxonomy {
+  const store = readStore();
+  const index = store.eventTypeTaxonomy.findIndex((t) => t.id === id);
+  if (index === -1) throw new Error("Event type not found");
+  store.eventTypeTaxonomy[index] = {
+    ...store.eventTypeTaxonomy[index],
+    ...input,
+    updated_at: new Date().toISOString(),
+  };
+  writeStore(store);
+  return store.eventTypeTaxonomy[index];
+}
+
+// Taxonomy — challenges
+export function getDevChallengeTaxonomy(): ChallengeTaxonomy[] {
+  return readStore()
+    .challengeTaxonomy.sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function getDevChallengeTaxonomyById(
+  id: string
+): ChallengeTaxonomy | null {
+  return readStore().challengeTaxonomy.find((t) => t.id === id) ?? null;
+}
+
+export function createDevChallengeTaxonomy(
+  input: CreateChallengeTaxonomyInput
+): ChallengeTaxonomy {
+  const store = readStore();
+  const item: ChallengeTaxonomy = {
+    id: randomUUID(),
+    kind: "challenges",
+    slug: input.slug,
+    label: input.label,
+    description: input.description ?? null,
+    icon: input.icon ?? "📸",
+    is_required: input.is_required ?? false,
+    event_type_slug: input.event_type_slug ?? null,
+    sort_order: input.sort_order ?? store.challengeTaxonomy.length,
+    active: input.active ?? true,
+    created_at: new Date().toISOString(),
+  };
+  store.challengeTaxonomy.push(item);
+  writeStore(store);
+  logActivity("taxonomy_created", `Challenge ${item.label} created`, item.id);
+  return item;
+}
+
+export function updateDevChallengeTaxonomy(
+  id: string,
+  input: UpdateChallengeTaxonomyInput
+): ChallengeTaxonomy {
+  const store = readStore();
+  const index = store.challengeTaxonomy.findIndex((t) => t.id === id);
+  if (index === -1) throw new Error("Challenge taxonomy not found");
+  store.challengeTaxonomy[index] = {
+    ...store.challengeTaxonomy[index],
+    ...input,
+    updated_at: new Date().toISOString(),
+  };
+  writeStore(store);
+  return store.challengeTaxonomy[index];
 }

@@ -28,23 +28,16 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 
-const EVENT_TYPES = [
-  { value: "wedding", label: "Wedding" },
-  { value: "birthday", label: "Birthday" },
-  { value: "corporate", label: "Corporate" },
-  { value: "milestone", label: "Life milestone" },
-  { value: "social", label: "Social / private" },
-  { value: "community", label: "Community" },
-  { value: "other", label: "Other" },
-] as const;
+import type { TaxonomyOption } from "@/lib/data/taxonomy";
 
 const IS_DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
 interface ClientFormProps {
   client?: Client;
+  eventTypeOptions: TaxonomyOption[];
 }
 
-export function ClientForm({ client }: ClientFormProps) {
+export function ClientForm({ client, eventTypeOptions }: ClientFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const isEditing = Boolean(client);
@@ -134,7 +127,7 @@ export function ClientForm({ client }: ClientFormProps) {
                 <SelectValue placeholder="Select event type" />
               </SelectTrigger>
               <SelectContent>
-                {EVENT_TYPES.map((t) => (
+                {eventTypeOptions.map((t) => (
                   <SelectItem key={t.value} value={t.value}>
                     {t.label}
                   </SelectItem>

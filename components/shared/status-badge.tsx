@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { EventStatus, ClientStatus } from "@/lib/types";
+import type { EventStatus, ClientStatus, AdminUserStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const EVENT_STATUS: Record<
@@ -60,4 +60,27 @@ export function ClientStatusBadge({
   className?: string;
 }) {
   return <StatusBadge status={status} type="client" className={className} />;
+}
+
+const ADMIN_USER_STATUS: Record<
+  AdminUserStatus,
+  { label: string; variant: "default" | "secondary" | "outline" | "destructive" }
+> = {
+  active: { label: "Active", variant: "default" },
+  inactive: { label: "Inactive", variant: "secondary" },
+};
+
+export function AdminUserStatusBadge({
+  status,
+  className,
+}: {
+  status: AdminUserStatus;
+  className?: string;
+}) {
+  const config = ADMIN_USER_STATUS[status] ?? ADMIN_USER_STATUS.active;
+  return (
+    <Badge variant={config.variant} className={cn(className)}>
+      {config.label}
+    </Badge>
+  );
 }
