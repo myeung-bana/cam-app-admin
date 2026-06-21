@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirectWithSuccessFlash } from "@/lib/flash/redirect-with-success";
 import {
   createClient,
   updateClient,
@@ -21,7 +21,7 @@ export async function createClientAction(formData: FormData) {
 
   await createClient(parsed.data);
   revalidatePath("/admin/clients");
-  redirect("/admin/clients");
+  redirectWithSuccessFlash("/admin/clients", "clientCreated");
 }
 
 export async function updateClientAction(id: string, formData: FormData) {
@@ -34,13 +34,13 @@ export async function updateClientAction(id: string, formData: FormData) {
   await updateClient(id, parsed.data);
   revalidatePath("/admin/clients");
   revalidatePath(`/admin/clients/${id}`);
-  redirect(`/admin/clients/${id}`);
+  redirectWithSuccessFlash(`/admin/clients/${id}`, "clientUpdated");
 }
 
 export async function archiveClientAction(id: string) {
   await archiveClient(id);
   revalidatePath("/admin/clients");
-  redirect("/admin/clients");
+  redirectWithSuccessFlash("/admin/clients", "clientArchived");
 }
 
 export async function resendPortalInviteAction(clientId: string) {

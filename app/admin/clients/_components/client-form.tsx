@@ -11,6 +11,8 @@ import {
   createClientAction,
   updateClientAction,
 } from "../_actions/client.actions";
+import type { TaxonomyOption } from "@/lib/data/taxonomy";
+import { getActionErrorMessage } from "@/lib/utils/server-action-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,9 +29,6 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-
-import type { TaxonomyOption } from "@/lib/data/taxonomy";
-import { getActionErrorMessage } from "@/lib/utils/server-action-error";
 
 interface ClientFormProps {
   client?: Client;
@@ -74,7 +73,6 @@ export function ClientForm({ client, eventTypeOptions }: ClientFormProps) {
       try {
         if (isEditing && client) {
           await updateClientAction(client.id, formData);
-          toast.success("Client updated");
         } else {
           await createClientAction(formData);
         }

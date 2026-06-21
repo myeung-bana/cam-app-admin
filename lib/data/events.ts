@@ -100,7 +100,6 @@ export async function createEvent(input: CreateEventInput): Promise<Event> {
       object: {
         ...input,
         join_code: generateJoinCode(),
-        qr_access_enabled: true,
         status: "draft",
       },
     }

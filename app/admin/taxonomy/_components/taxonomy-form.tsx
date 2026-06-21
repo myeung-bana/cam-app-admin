@@ -23,6 +23,7 @@ import type {
 } from "@/lib/types";
 import type { TaxonomyOption } from "@/lib/data/taxonomy";
 import { getActionErrorMessage } from "@/lib/utils/server-action-error";
+import { showSuccessToast } from "@/lib/ui/success-toast";
 import { SlugInput } from "@/components/shared/slug-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,7 +100,7 @@ export function TaxonomyForm({
       try {
         if (isEditing && item) {
           await updateTaxonomyAction(kind, item.id, formData);
-          toast.success("Saved");
+          showSuccessToast("taxonomyUpdated");
         } else {
           await createTaxonomyAction(kind, formData);
         }
@@ -123,7 +124,7 @@ export function TaxonomyForm({
       try {
         if (isEditing && item) {
           await updateTaxonomyAction(kind, item.id, formData);
-          toast.success("Saved");
+          showSuccessToast("taxonomyUpdated");
         } else {
           await createTaxonomyAction(kind, formData);
         }

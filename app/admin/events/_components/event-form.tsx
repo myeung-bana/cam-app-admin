@@ -6,6 +6,7 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { eventSchema, type EventInput } from "@/lib/schemas/event.schema";
+import { getActionErrorMessage } from "@/lib/utils/server-action-error";
 import type { Client } from "@/lib/types";
 import { createEventAction } from "../_actions/event.actions";
 import { Button } from "@/components/ui/button";
@@ -28,8 +29,6 @@ import {
 } from "@/components/ui/card";
 
 import type { TaxonomyOption } from "@/lib/data/taxonomy";
-
-const IS_DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
 interface EventFormProps {
   clients: Client[];
@@ -79,11 +78,6 @@ export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
   }
 
   function onSubmit(values: EventInput) {
-    if (!IS_DEV_MODE) {
-      toast.info("Connect Nhost or enable dev mode to create events.");
-      return;
-    }
-
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
       if (value !== undefined && value !== "") {
@@ -95,7 +89,7 @@ export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
       try {
         await createEventAction(formData);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to create event");
+        toast.error(getActionErrorMessage(err, "Failed to create event"));
       }
     });
   }

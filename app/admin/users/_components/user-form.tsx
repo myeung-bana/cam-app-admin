@@ -9,6 +9,8 @@ import {
   adminUserSchema,
   type AdminUserInput,
 } from "@/lib/schemas/admin-user.schema";
+import { getActionErrorMessage } from "@/lib/utils/server-action-error";
+import { showSuccessToast } from "@/lib/ui/success-toast";
 import type { AdminUser } from "@/lib/types";
 import {
   createAdminUserAction,
@@ -33,8 +35,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-const IS_DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
 interface UserFormProps {
   user?: AdminUser;
@@ -67,11 +67,6 @@ export function UserForm({ user }: UserFormProps) {
   const status = watch("status");
 
   function onSubmit(values: AdminUserInput) {
-    if (!IS_DEV_MODE) {
-      toast.info("Connect Nhost or enable dev mode to save admin users.");
-      return;
-    }
-
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
       if (value !== undefined && value !== "") {
@@ -83,12 +78,12 @@ export function UserForm({ user }: UserFormProps) {
       try {
         if (isEditing && user) {
           await updateAdminUserAction(user.id, formData);
-          toast.success("User updated");
+          showSuccessToast("adminUserUpdated");
         } else {
           await createAdminUserAction(formData);
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to save user");
+        toast.error(getActionErrorMessage(err, "Failed to save user"));
       }
     });
   }

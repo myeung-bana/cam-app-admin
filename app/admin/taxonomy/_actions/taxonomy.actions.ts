@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirectWithSuccessFlash } from "@/lib/flash/redirect-with-success";
 import {
   createEventTypeTaxonomy,
   updateEventTypeTaxonomy,
@@ -43,7 +43,10 @@ export async function createTaxonomyAction(
     }
     const item = await createEventTypeTaxonomy(parsed.data);
     revalidateTaxonomy(kind);
-    redirect(`/admin/taxonomy/${kind}/${item.id}`);
+    redirectWithSuccessFlash(
+      `/admin/taxonomy/${kind}/${item.id}`,
+      "taxonomyCreated"
+    );
   }
 
   const parsed = challengeTaxonomySchema.safeParse({
@@ -57,7 +60,10 @@ export async function createTaxonomyAction(
   }
   const item = await createChallengeTaxonomy(parsed.data);
   revalidateTaxonomy(kind);
-  redirect(`/admin/taxonomy/${kind}/${item.id}`);
+  redirectWithSuccessFlash(
+    `/admin/taxonomy/${kind}/${item.id}`,
+    "taxonomyCreated"
+  );
 }
 
 export async function updateTaxonomyAction(

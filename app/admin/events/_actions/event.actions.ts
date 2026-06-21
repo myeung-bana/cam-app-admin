@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirectWithSuccessFlash } from "@/lib/flash/redirect-with-success";
 import {
   createEvent,
   updateEvent,
@@ -39,7 +39,7 @@ export async function createEventAction(formData: FormData) {
     end_time: new Date(parsed.data.end_time).toISOString(),
   });
   revalidatePath("/admin/events");
-  redirect(`/admin/events/${event.id}`);
+  redirectWithSuccessFlash(`/admin/events/${event.id}`, "eventCreated");
 }
 
 export async function transitionEventStatusAction(

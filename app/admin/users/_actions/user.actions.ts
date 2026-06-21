@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirectWithSuccessFlash } from "@/lib/flash/redirect-with-success";
 import { createAdminUser, updateAdminUser } from "@/lib/data/admin-users";
 import {
   adminUserSchema,
@@ -21,7 +21,7 @@ export async function createAdminUserAction(formData: FormData) {
 
   const user = await createAdminUser(parsed.data);
   revalidatePath("/admin/users");
-  redirect(`/admin/users/${user.id}`);
+  redirectWithSuccessFlash(`/admin/users/${user.id}`, "adminUserCreated");
 }
 
 export async function updateAdminUserAction(id: string, formData: FormData) {
