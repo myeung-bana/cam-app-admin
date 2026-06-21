@@ -8,9 +8,12 @@ export const SUBSCRIBE_EVENT_MEDIA = gql`
     ) {
       id
       file_url
+      storage_file_id
       file_type
       filter_applied
       uploaded_at
+      is_hidden
+      is_starred
       session {
         display_name
       }

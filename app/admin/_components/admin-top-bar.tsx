@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Menu } from "lucide-react";
-import { useSignOut } from "@nhost/nextjs";
 import { cn } from "@/lib/utils";
 import type { AuthSession } from "@/lib/types";
 import { AdminNavItems } from "./admin-nav-items";
@@ -30,7 +29,6 @@ interface AdminTopBarProps {
 
 export function AdminTopBar({ user }: AdminTopBarProps) {
   const router = useRouter();
-  const { signOut } = useSignOut();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const initials = user.email
@@ -108,13 +106,13 @@ export function AdminTopBar({ user }: AdminTopBarProps) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={async () => {
-              if (process.env.NEXT_PUBLIC_DEV_MODE === "true") {
-                await fetch("/api/dev/logout", { method: "POST" });
-                router.push("/login");
-                router.refresh();
-                return;
-              }
-              signOut();
+              const endpoint =
+                process.env.NEXT_PUBLIC_DEV_MODE === "true"
+                  ? "/api/dev/logout"
+                  : "/api/auth/logout";
+              await fetch(endpoint, { method: "POST" });
+              router.push("/login");
+              router.refresh();
             }}
             className="text-destructive focus:text-destructive"
           >

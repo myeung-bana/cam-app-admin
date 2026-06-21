@@ -5,6 +5,7 @@ import { getEventMedia } from "@/lib/data/media";
 import { EntityHeader } from "@/components/shared/entity-header";
 import { EventStatusBadge } from "@/components/shared/status-badge";
 import { EventNav } from "@/components/shared/event-nav";
+import { MediaUpload } from "@/components/shared/media-upload";
 import { MediaGrid } from "@/components/shared/media-grid";
 import { EmptyState } from "@/components/shared/empty-state";
 import { buttonVariants } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export default async function EventMediaPage({ params }: Props) {
         description="Media gallery"
       >
         <div className="flex gap-2">
+          <MediaUpload eventId={eventId} />
           <button className={buttonVariants({ variant: "outline", size: "sm" })} disabled>
             Bulk download
           </button>

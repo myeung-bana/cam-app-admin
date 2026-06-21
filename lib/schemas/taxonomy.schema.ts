@@ -1,9 +1,5 @@
 import { z } from "zod";
-
-const slugSchema = z
-  .string()
-  .min(2, "Slug is required")
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens");
+import { slugSchema } from "@/lib/schemas/slug.schema";
 
 export const eventTypeTaxonomySchema = z.object({
   slug: slugSchema,

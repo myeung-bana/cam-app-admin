@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Image from "next/image";
 import { Eye, EyeOff, Star } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -8,6 +9,7 @@ import {
   toggleMediaStarAction,
 } from "@/app/admin/events/_actions/media.actions";
 import type { Media } from "@/lib/types";
+import { getMediaDisplayUrl } from "@/lib/media-url";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -186,58 +188,71 @@ export function MediaGrid({ eventId, media }: MediaGridProps) {
         <p className="text-sm text-muted-foreground">No media matches the current filters.</p>
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
-          {filtered.map((item) => (
-            <div
-              key={item.id}
-              className={cn(
-                "group relative aspect-square rounded-lg border bg-muted",
-                item.is_hidden && "opacity-50",
-                selected.has(item.id) && "ring-2 ring-primary"
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={selected.has(item.id)}
-                onChange={() => toggleSelect(item.id)}
-                className="absolute left-2 top-2 z-10 h-4 w-4"
-              />
-              {item.is_starred && (
-                <Star className="absolute right-2 top-2 z-10 h-4 w-4 fill-amber-400 text-amber-400" />
-              )}
-              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                <div className="flex w-full gap-1">
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="h-7 w-7"
-                    disabled={isPending}
-                    onClick={() => toggleStar(item)}
-                  >
-                    <Star className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="h-7 w-7"
-                    disabled={isPending}
-                    onClick={() => toggleHidden(item)}
-                  >
-                    {item.is_hidden ? (
-                      <Eye className="h-3 w-3" />
-                    ) : (
-                      <EyeOff className="h-3 w-3" />
+          {filtered.map((item) => {
+            const displayUrl = getMediaDisplayUrl(item);
+            return (
+              <div
+                key={item.id}
+                className={cn(
+                  "group relative aspect-square overflow-hidden rounded-lg border bg-muted",
+                  item.is_hidden && "opacity-50",
+                  selected.has(item.id) && "ring-2 ring-primary"
+                )}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.has(item.id)}
+                  onChange={() => toggleSelect(item.id)}
+                  className="absolute left-2 top-2 z-10 h-4 w-4"
+                />
+                {item.is_starred && (
+                  <Star className="absolute right-2 top-2 z-10 h-4 w-4 fill-amber-400 text-amber-400" />
+                )}
+                {displayUrl && item.file_type === "photo" ? (
+                  <Image
+                    src={displayUrl}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center p-2 text-center text-xs text-muted-foreground">
+                    <span className="capitalize">{item.file_type}</span>
+                    {item.challenge_tag && (
+                      <span className="mt-1 truncate">{item.challenge_tag}</span>
                     )}
-                  </Button>
+                  </div>
+                )}
+                <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                  <div className="flex w-full gap-1">
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="h-7 w-7"
+                      disabled={isPending}
+                      onClick={() => toggleStar(item)}
+                    >
+                      <Star className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="h-7 w-7"
+                      disabled={isPending}
+                      onClick={() => toggleHidden(item)}
+                    >
+                      {item.is_hidden ? (
+                        <Eye className="h-3 w-3" />
+                      ) : (
+                        <EyeOff className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
-              <div className="flex h-full flex-col items-center justify-center p-2 text-center text-xs text-muted-foreground">
-                <span className="capitalize">{item.file_type}</span>
-                {item.challenge_tag && (
-                  <span className="mt-1 truncate">{item.challenge_tag}</span>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

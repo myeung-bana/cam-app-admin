@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { getAuthSession } from "@/lib/data/auth";
+import { requireAdminSession } from "@/lib/data/auth";
 import { AdminSidebar } from "./_components/admin-sidebar";
 import { AdminTopBar } from "./_components/admin-top-bar";
 import { ApolloProvider } from "./_components/apollo-provider";
@@ -10,8 +9,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getAuthSession();
-  if (!session) redirect("/login");
+  const session = await requireAdminSession();
 
   return (
     <ApolloProvider>

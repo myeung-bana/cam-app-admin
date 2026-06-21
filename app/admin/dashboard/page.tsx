@@ -7,11 +7,11 @@ import {
 import { getDashboardConfig, getUpcomingEvents, getRecentActivity } from "@/lib/data/dashboard";
 import { isDevMode } from "@/lib/dev/config";
 import { isBackendConfigured } from "@/lib/nhost";
+import { getMissingBackendEnvVars } from "@/lib/config/backend";
 import { PageHeader } from "@/components/shared/page-header";
 import { MetricCard } from "@/components/shared/metric-card";
 import { UpcomingEventsTable } from "@/components/shared/upcoming-events-table";
 import { ActivityFeed } from "@/components/shared/activity-feed";
-import { DashboardEditor } from "./_components/dashboard-editor";
 
 export default async function DashboardPage() {
   const [config, upcoming, activity] = await Promise.all([
@@ -21,6 +21,7 @@ export default async function DashboardPage() {
   ]);
   const devMode = isDevMode();
   const backendReady = isBackendConfigured();
+  const missingEnv = getMissingBackendEnvVars();
 
   const metrics = [
     {
@@ -51,9 +52,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={config.title} description={config.description}>
-        {devMode && <DashboardEditor config={config} />}
-      </PageHeader>
+      <PageHeader title={config.title} description={config.description} />
 
       {devMode && (
         <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 text-sm text-amber-900">
@@ -62,9 +61,20 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      {!devMode && backendReady && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 text-sm text-emerald-900">
+          Connected to Nhost — live data from Hasura and Functions.
+        </div>
+      )}
+
       {!devMode && !backendReady && (
-        <div className="rounded-lg border border-dashed bg-muted/40 p-4 text-sm text-muted-foreground">
-          Connect Nhost or enable dev mode to load live data.
+        <div className="rounded-lg border border-red-200 bg-red-50/50 p-4 text-sm text-red-900">
+          Nhost not configured. Set{" "}
+          <code className="rounded bg-red-100 px-1">
+            {missingEnv.length > 0 ? missingEnv.join(", ") : "NHOST_* env vars"}
+          </code>{" "}
+          in <code className="rounded bg-red-100 px-1">.env.local</code> and
+          restart the dev server.
         </div>
       )}
 

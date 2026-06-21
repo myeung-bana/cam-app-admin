@@ -29,8 +29,7 @@ import {
 } from "@/components/ui/card";
 
 import type { TaxonomyOption } from "@/lib/data/taxonomy";
-
-const IS_DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
+import { getActionErrorMessage } from "@/lib/utils/server-action-error";
 
 interface ClientFormProps {
   client?: Client;
@@ -64,11 +63,6 @@ export function ClientForm({ client, eventTypeOptions }: ClientFormProps) {
   const eventType = watch("event_type_preference");
 
   function onSubmit(values: ClientInput) {
-    if (!IS_DEV_MODE) {
-      toast.info("Connect Nhost or enable dev mode to save clients.");
-      return;
-    }
-
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
       if (value !== undefined && value !== "") {
@@ -80,11 +74,12 @@ export function ClientForm({ client, eventTypeOptions }: ClientFormProps) {
       try {
         if (isEditing && client) {
           await updateClientAction(client.id, formData);
+          toast.success("Client updated");
         } else {
           await createClientAction(formData);
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to save client");
+        toast.error(getActionErrorMessage(err, "Failed to save client"));
       }
     });
   }

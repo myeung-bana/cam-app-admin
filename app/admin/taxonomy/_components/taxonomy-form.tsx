@@ -22,6 +22,8 @@ import type {
   ChallengeTaxonomy,
 } from "@/lib/types";
 import type { TaxonomyOption } from "@/lib/data/taxonomy";
+import { getActionErrorMessage } from "@/lib/utils/server-action-error";
+import { SlugInput } from "@/components/shared/slug-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,8 +44,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-const IS_DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
 interface TaxonomyFormProps {
   kind: TaxonomyKind;
@@ -89,10 +89,6 @@ export function TaxonomyForm({
   });
 
   function submitEventType(values: EventTypeTaxonomyInput) {
-    if (!IS_DEV_MODE) {
-      toast.info("Connect Nhost or enable dev mode to save taxonomy.");
-      return;
-    }
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
       if (value !== undefined && value !== "") formData.append(key, String(value));
@@ -108,16 +104,12 @@ export function TaxonomyForm({
           await createTaxonomyAction(kind, formData);
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to save");
+        toast.error(getActionErrorMessage(err, "Failed to save"));
       }
     });
   }
 
   function submitChallenge(values: ChallengeTaxonomyInput) {
-    if (!IS_DEV_MODE) {
-      toast.info("Connect Nhost or enable dev mode to save taxonomy.");
-      return;
-    }
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
       if (value !== undefined && value !== "" && value !== null) {
@@ -136,7 +128,7 @@ export function TaxonomyForm({
           await createTaxonomyAction(kind, formData);
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to save");
+        toast.error(getActionErrorMessage(err, "Failed to save"));
       }
     });
   }
@@ -163,15 +155,15 @@ export function TaxonomyForm({
                   </p>
                 )}
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="slug">Slug</Label>
-                <Input id="slug" placeholder="wedding" {...challengeForm.register("slug")} />
-                {challengeForm.formState.errors.slug && (
-                  <p className="text-sm text-destructive">
-                    {challengeForm.formState.errors.slug.message}
-                  </p>
-                )}
-              </div>
+              <SlugInput
+                id="slug"
+                value={challengeForm.watch("slug")}
+                onChange={(value) =>
+                  challengeForm.setValue("slug", value, { shouldValidate: true })
+                }
+                onBlur={() => challengeForm.trigger("slug")}
+                error={challengeForm.formState.errors.slug?.message}
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Description</Label>
@@ -246,15 +238,15 @@ export function TaxonomyForm({
                   </p>
                 )}
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="slug">Slug</Label>
-                <Input id="slug" placeholder="wedding" {...eventForm.register("slug")} />
-                {eventForm.formState.errors.slug && (
-                  <p className="text-sm text-destructive">
-                    {eventForm.formState.errors.slug.message}
-                  </p>
-                )}
-              </div>
+              <SlugInput
+                id="slug"
+                value={eventForm.watch("slug")}
+                onChange={(value) =>
+                  eventForm.setValue("slug", value, { shouldValidate: true })
+                }
+                onBlur={() => eventForm.trigger("slug")}
+                error={eventForm.formState.errors.slug?.message}
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Description</Label>

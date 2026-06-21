@@ -4,6 +4,7 @@ import { useSubscription } from "@apollo/client/react";
 import { Users } from "lucide-react";
 import { SUBSCRIBE_ACTIVE_SESSIONS } from "@/lib/graphql/events/subscriptions";
 import type { ActiveSessionsData } from "@/lib/types/subscriptions";
+import { useAuth } from "@/lib/auth/auth-context";
 import {
   Card,
   CardContent,
@@ -17,12 +18,13 @@ interface LiveSessionCountProps {
 }
 
 export function LiveSessionCount({ eventId, max }: LiveSessionCountProps) {
+  const { accessToken } = useAuth();
   const { data } = useSubscription<ActiveSessionsData>(SUBSCRIBE_ACTIVE_SESSIONS, {
     variables: { eventId },
-    skip: !process.env.NEXT_PUBLIC_NHOST_SUBDOMAIN,
+    skip: !accessToken,
   });
 
-  const count = data?.sessions_aggregate?.aggregate?.count ?? 0;
+  const count = data?.guest_sessions_aggregate?.aggregate?.count ?? 0;
 
   return (
     <Card>

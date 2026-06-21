@@ -12,7 +12,6 @@ import {
   eventTypeTaxonomySchema,
   challengeTaxonomySchema,
 } from "@/lib/schemas/taxonomy.schema";
-import { isDevMode } from "@/lib/dev/config";
 import type { TaxonomyKind } from "@/lib/types";
 import { isTaxonomyKind } from "@/lib/taxonomy/registry";
 
@@ -30,7 +29,6 @@ export async function createTaxonomyAction(
   kind: string,
   formData: FormData
 ) {
-  if (!isDevMode()) throw new Error("Taxonomy requires dev mode.");
   if (!isTaxonomyKind(kind)) throw new Error("Invalid taxonomy kind.");
 
   const raw = Object.fromEntries(formData);
@@ -67,7 +65,6 @@ export async function updateTaxonomyAction(
   id: string,
   formData: FormData
 ) {
-  if (!isDevMode()) throw new Error("Taxonomy requires dev mode.");
   if (!isTaxonomyKind(kind)) throw new Error("Invalid taxonomy kind.");
 
   const raw = Object.fromEntries(formData);

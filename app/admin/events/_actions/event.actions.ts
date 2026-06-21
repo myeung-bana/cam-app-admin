@@ -6,10 +6,13 @@ import {
   createEvent,
   updateEvent,
   transitionEventStatus,
+  rotateEventJoinCode,
 } from "@/lib/data/events";
 import { eventSchema } from "@/lib/schemas/event.schema";
 import { isDevMode } from "@/lib/dev/config";
 import { logActivity } from "@/lib/dev/store";
+import { rotateJoinCodeFromFunction } from "@/lib/functions/admin-events";
+import { isFunctionsConfigured } from "@/lib/functions/client";
 import type { EventStatus } from "@/lib/types";
 
 function revalidateEvent(eventId: string) {
@@ -23,10 +26,6 @@ function revalidateEvent(eventId: string) {
 }
 
 export async function createEventAction(formData: FormData) {
-  if (!isDevMode()) {
-    throw new Error("Event creation requires dev mode or a connected backend.");
-  }
-
   const raw = Object.fromEntries(formData);
   const parsed = eventSchema.safeParse(raw);
 
@@ -47,28 +46,29 @@ export async function transitionEventStatusAction(
   eventId: string,
   status: EventStatus
 ) {
-  if (!isDevMode()) throw new Error("Status transitions require dev mode.");
   await transitionEventStatus(eventId, status);
   revalidateEvent(eventId);
 }
 
 export async function adjustEventCapAction(eventId: string, cap: number) {
-  if (!isDevMode()) throw new Error("Cap adjustment requires dev mode.");
   if (cap < 1) throw new Error("Cap must be at least 1");
   await updateEvent(eventId, { max_attendees: cap });
-  logActivity("cap_adjusted", `Attendee cap set to ${cap}`, eventId);
+  if (isDevMode()) {
+    logActivity("cap_adjusted", `Attendee cap set to ${cap}`, eventId);
+  }
   revalidateEvent(eventId);
 }
 
-export async function regenerateQrAction(eventId: string) {
-  if (!isDevMode()) throw new Error("QR regeneration requires dev mode.");
-  const token = `qr-${Date.now()}`;
-  await updateEvent(eventId, {
-    qr_token: token,
-    qr_image_url: `/api/events/${eventId}/qr?t=${Date.now()}`,
-  });
-  logActivity("qr_regenerated", "Event QR code regenerated", eventId);
+export async function rotateJoinCodeAction(eventId: string) {
+  if (!isDevMode() && isFunctionsConfigured()) {
+    const result = await rotateJoinCodeFromFunction(eventId);
+    revalidateEvent(eventId);
+    return { joinCode: result.joinCode };
+  }
+
+  const event = await rotateEventJoinCode(eventId);
   revalidateEvent(eventId);
+  return { joinCode: event.join_code };
 }
 
 export async function updatePortalSettingsAction(
@@ -79,13 +79,13 @@ export async function updatePortalSettingsAction(
     retention_expires_at?: string | null;
   }
 ) {
-  if (!isDevMode()) throw new Error("Portal settings require dev mode.");
   await updateEvent(eventId, settings);
   revalidateEvent(eventId);
 }
 
 export async function resendMemoriesEmailAction(eventId: string) {
-  if (!isDevMode()) throw new Error("Notifications require dev mode.");
-  logActivity("memories_email", "Memories ready email resent", eventId);
+  if (isDevMode()) {
+    logActivity("memories_email", "Memories ready email resent", eventId);
+  }
   revalidateEvent(eventId);
 }

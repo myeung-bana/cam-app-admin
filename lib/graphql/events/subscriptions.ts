@@ -2,7 +2,7 @@ import { gql } from "graphql-tag";
 
 export const SUBSCRIBE_ACTIVE_SESSIONS = gql`
   subscription ActiveSessionCount($eventId: uuid!) {
-    sessions_aggregate(
+    guest_sessions_aggregate(
       where: {
         event_id: { _eq: $eventId }
         last_heartbeat_at: { _gt: "now() - interval '5 minutes'" }
@@ -24,9 +24,12 @@ export const SUBSCRIBE_MEDIA_FEED = gql`
     ) {
       id
       file_url
+      storage_file_id
       file_type
       filter_applied
       uploaded_at
+      is_hidden
+      is_starred
       session {
         display_name
       }

@@ -90,7 +90,7 @@ export default async function EventLivePage({ params }: Props) {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <LiveUploadFeed eventId={eventId} media={media} />
+          <LiveUploadFeed eventId={eventId} initialMedia={media} />
         </div>
         <ChallengeHeatmap challenges={challenges} media={media} />
       </div>

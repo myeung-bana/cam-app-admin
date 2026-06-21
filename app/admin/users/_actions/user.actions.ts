@@ -7,13 +7,8 @@ import {
   adminUserSchema,
   createAdminUserSchema,
 } from "@/lib/schemas/admin-user.schema";
-import { isDevMode } from "@/lib/dev/config";
 
 export async function createAdminUserAction(formData: FormData) {
-  if (!isDevMode()) {
-    throw new Error("User creation requires dev mode or a connected backend.");
-  }
-
   const raw = Object.fromEntries(formData);
   const parsed = createAdminUserSchema.safeParse({
     ...raw,
@@ -30,10 +25,6 @@ export async function createAdminUserAction(formData: FormData) {
 }
 
 export async function updateAdminUserAction(id: string, formData: FormData) {
-  if (!isDevMode()) {
-    throw new Error("User updates require dev mode or a connected backend.");
-  }
-
   const raw = Object.fromEntries(formData);
   const parsed = adminUserSchema.safeParse(raw);
 

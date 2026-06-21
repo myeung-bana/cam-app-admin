@@ -39,7 +39,9 @@ interface EventFormProps {
 export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const preselectedClient = searchParams.get("clientId") ?? clients[0]?.id;
+  const preselectedClientId =
+    searchParams.get("clientId") ?? clients[0]?.id ?? "";
+  const defaultEventType = eventTypeOptions[0]?.value ?? "";
   const [step, setStep] = useState(1);
   const [isPending, startTransition] = useTransition();
 
@@ -54,14 +56,14 @@ export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
     resolver: zodResolver(eventSchema) as Resolver<EventInput>,
     defaultValues: {
       max_attendees: 150,
-      client_id: preselectedClient,
-      event_type: eventTypeOptions[0]?.value ?? "wedding",
+      client_id: preselectedClientId,
+      event_type: defaultEventType,
       accent_color: "#6366f1",
     },
   });
 
-  const clientId = watch("client_id");
-  const eventType = watch("event_type");
+  const clientId = watch("client_id") ?? "";
+  const eventType = watch("event_type") ?? "";
 
   async function goToStep2() {
     const valid = await trigger([
@@ -122,21 +124,26 @@ export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
                 <Select
                   value={clientId}
                   onValueChange={(value) => {
-                    if (value) setValue("client_id", value);
+                    if (value) setValue("client_id", value, { shouldValidate: true });
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
                   <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
+                    {clients.length === 0 ? (
+                      <SelectItem value="__none" disabled>
+                        No clients available
                       </SelectItem>
-                    ))}
+                    ) : (
+                      clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
-                <input type="hidden" {...register("client_id")} />
                 {errors.client_id && (
                   <p className="text-sm text-destructive">{errors.client_id.message}</p>
                 )}
@@ -146,20 +153,29 @@ export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
                 <Select
                   value={eventType}
                   onValueChange={(value) => {
-                    if (value) setValue("event_type", value);
+                    if (value) setValue("event_type", value, { shouldValidate: true });
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {eventTypeOptions.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
+                    {eventTypeOptions.length === 0 ? (
+                      <SelectItem value="__none" disabled>
+                        No event types configured
                       </SelectItem>
-                    ))}
+                    ) : (
+                      eventTypeOptions.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
+                {errors.event_type && (
+                  <p className="text-sm text-destructive">{errors.event_type.message}</p>
+                )}
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">

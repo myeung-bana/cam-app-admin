@@ -20,7 +20,8 @@ export function isBackendConfigured(): boolean {
   return Boolean(
     process.env.NHOST_SUBDOMAIN &&
       process.env.NHOST_REGION &&
-      process.env.NHOST_ADMIN_SECRET
+      process.env.NHOST_ADMIN_SECRET &&
+      process.env.NHOST_ADMIN_SECRET !== "your-hasura-admin-secret"
   );
 }
 

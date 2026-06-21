@@ -1,6 +1,6 @@
 "use client";
 
-import { useSignInEmailPassword } from "@nhost/nextjs";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth/auth-context";
+import { sanitizeCallbackUrl } from "@/lib/auth/redirects";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -26,11 +28,18 @@ type LoginInput = z.infer<typeof loginSchema>;
 
 const IS_DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
-export function LoginForm() {
-  const { signInEmailPassword, isLoading, isError } = useSignInEmailPassword();
+interface LoginFormProps {
+  unauthorized?: boolean;
+}
+
+export function LoginForm({ unauthorized = false }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/admin/dashboard";
+  const { refreshSession } = useAuth();
+  const callbackUrl = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
+  const [accessDenied, setAccessDenied] = useState(unauthorized);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const {
     register,
@@ -44,25 +53,38 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: LoginInput) {
-    if (IS_DEV_MODE) {
-      const res = await fetch("/api/dev/login", {
+    setAccessDenied(false);
+    setAuthError(null);
+    setIsSubmitting(true);
+
+    try {
+      const endpoint = IS_DEV_MODE ? "/api/dev/login" : "/api/auth/login";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
 
-      if (res.ok) {
-        router.replace(callbackUrl);
-        router.refresh();
-      }
-      return;
-    }
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
 
-    const { isSuccess } = await signInEmailPassword(
-      values.email,
-      values.password
-    );
-    if (isSuccess) router.replace(callbackUrl);
+      if (!res.ok) {
+        if (res.status === 403) {
+          setAccessDenied(true);
+        } else {
+          setAuthError(body.error ?? "Invalid credentials.");
+        }
+        return;
+      }
+
+      await refreshSession();
+      router.replace(callbackUrl);
+      router.refresh();
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -75,7 +97,7 @@ export function LoginForm() {
         <CardDescription>
           {IS_DEV_MODE
             ? "Dev mode — any email and password (8+ chars) will work."
-            : "Sign in to manage clients, events, and media."}
+            : "Sign in with an admin account to manage clients, events, and media."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -83,6 +105,12 @@ export function LoginForm() {
           {IS_DEV_MODE && (
             <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
               Dev mode active. Default: admin@example.com / devpassword
+            </div>
+          )}
+          {accessDenied && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              This account does not have admin access. Contact your platform
+              administrator.
             </div>
           )}
           <div className="grid gap-2">
@@ -111,11 +139,11 @@ export function LoginForm() {
               </p>
             )}
           </div>
-          {!IS_DEV_MODE && isError && (
-            <p className="text-sm text-destructive">Invalid credentials.</p>
+          {authError && (
+            <p className="text-sm text-destructive">{authError}</p>
           )}
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Signing in…" : "Sign in"}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Signing in…" : "Sign in"}
           </Button>
         </form>
       </CardContent>

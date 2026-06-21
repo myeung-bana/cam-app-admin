@@ -2,6 +2,7 @@ import "server-only";
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
 import { randomUUID } from "crypto";
+import { generateJoinCode } from "@/lib/utils/join-code";
 import type {
   Client,
   Event,
@@ -214,8 +215,8 @@ export function createDevEvent(input: CreateEventInput): Event {
     end_time: input.end_time,
     venue_name: input.venue_name ?? null,
     max_attendees: input.max_attendees,
-    qr_token: null,
-    qr_image_url: null,
+    join_code: generateJoinCode(),
+    qr_access_enabled: true,
     status: "draft",
     accent_color: input.accent_color ?? null,
     cover_image_url: input.cover_image_url ?? null,
@@ -248,6 +249,22 @@ export function updateDevEvent(id: string, input: UpdateEventInput): Event {
       : existing.client,
   };
   writeStore(store);
+  return store.events[index];
+}
+
+export function rotateDevJoinCode(id: string): Event {
+  const store = readStore();
+  const index = store.events.findIndex((e) => e.id === id);
+  if (index === -1) throw new Error("Event not found");
+
+  const existing = store.events[index];
+  store.events[index] = {
+    ...existing,
+    join_code: generateJoinCode(),
+    join_code_rotated_at: new Date().toISOString(),
+  };
+  writeStore(store);
+  logActivity("join_code_rotated", "Event join code rotated (emergency)", id);
   return store.events[index];
 }
 

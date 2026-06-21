@@ -1,10 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
-import { Download, ExternalLink, FileText, QrCode, RefreshCw } from "lucide-react";
-import Image from "next/image";
+import { useTransition, useState } from "react";
+import { Download, ExternalLink, FileText, QrCode, Copy, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { regenerateQrAction } from "@/app/admin/events/_actions/event.actions";
+import { rotateJoinCodeAction } from "@/app/admin/events/_actions/event.actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/shared/confirmation-dialog";
 import {
@@ -15,24 +14,33 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { buildGuestJoinUrl } from "@/lib/utils/join-code";
 
 interface QrDisplayProps {
-  imageUrl: string | null;
+  joinCode: string;
   eventId: string;
 }
 
-export function QrDisplay({ imageUrl, eventId }: QrDisplayProps) {
+export function QrDisplay({ joinCode, eventId }: QrDisplayProps) {
   const [isPending, startTransition] = useTransition();
-  const qrApiUrl = `/api/events/${eventId}/qr`;
-  const sandboxUrl = `/e/${eventId}?preview=true`;
+  const [currentJoinCode, setCurrentJoinCode] = useState(joinCode);
+  const qrApiUrl = `/api/admin/events/${eventId}/qr`;
+  const joinUrl = buildGuestJoinUrl(currentJoinCode);
+  const sandboxUrl = `${joinUrl}?preview=true`;
 
-  function handleRegenerate() {
+  function handleCopyLink() {
+    void navigator.clipboard.writeText(joinUrl);
+    toast.success("Join link copied");
+  }
+
+  function handleRotate() {
     startTransition(async () => {
       try {
-        await regenerateQrAction(eventId);
-        toast.success("QR code regenerated");
+        const result = await rotateJoinCodeAction(eventId);
+        setCurrentJoinCode(result.joinCode);
+        toast.success("Join code rotated — reprint QR materials");
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to regenerate QR");
+        toast.error(err instanceof Error ? err.message : "Failed to rotate join code");
       }
     });
   }
@@ -45,29 +53,18 @@ export function QrDisplay({ imageUrl, eventId }: QrDisplayProps) {
           Event QR Code
         </CardTitle>
         <CardDescription>
-          Guests scan this code to join the event. Valid only during the scheduled
-          time window.
+          This QR never expires. Event rules (times, cap, status) are checked
+          when guests scan. Code: <span className="font-mono">{currentJoinCode}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
         <div className="flex h-48 w-48 items-center justify-center rounded-lg border bg-white p-4">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt="Event QR code"
-              width={160}
-              height={160}
-              className="h-full w-full object-contain"
-              unoptimized
-            />
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={qrApiUrl}
-              alt="Event QR code"
-              className="h-full w-full object-contain"
-            />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`${qrApiUrl}?v=${currentJoinCode}`}
+            alt="Event QR code"
+            className="h-full w-full object-contain"
+          />
         </div>
         <div className="flex flex-col gap-2">
           <a
@@ -79,8 +76,12 @@ export function QrDisplay({ imageUrl, eventId }: QrDisplayProps) {
             )}
           >
             <Download className="mr-2 h-4 w-4" />
-            Download PNG / SVG
+            Download SVG
           </a>
+          <Button variant="outline" size="sm" onClick={handleCopyLink}>
+            <Copy className="mr-2 h-4 w-4" />
+            Copy join link
+          </Button>
           <Button variant="outline" size="sm" disabled>
             <FileText className="mr-2 h-4 w-4" />
             Print-ready PDF (coming soon)
@@ -89,14 +90,14 @@ export function QrDisplay({ imageUrl, eventId }: QrDisplayProps) {
             trigger={
               <Button variant="outline" size="sm" disabled={isPending}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Regenerate QR
+                Rotate join code (emergency)
               </Button>
             }
-            title="Regenerate QR code?"
-            description="The current QR code will stop working. Print materials must be updated."
-            confirmLabel="Regenerate"
+            title="Rotate join code?"
+            description="This invalidates the current printed QR. Only use if the join link was compromised."
+            confirmLabel="Rotate code"
             variant="destructive"
-            onConfirm={handleRegenerate}
+            onConfirm={handleRotate}
           />
           <a
             href={sandboxUrl}

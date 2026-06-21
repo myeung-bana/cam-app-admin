@@ -6,7 +6,7 @@ Next.js admin frontend for the Wedding Capture platform. Manages clients, events
 
 - **Next.js 15** (App Router, React Server Components)
 - **shadcn/ui** + Tailwind CSS v4
-- **Nhost** (Hasura GraphQL, Auth, Storage) via `@nhost/nextjs`
+- **Nhost** (Hasura GraphQL via headless Functions auth API)
 - **Apollo Client** for real-time GraphQL subscriptions
 - **TanStack Table** for data tables
 - **Zod** + react-hook-form for validation

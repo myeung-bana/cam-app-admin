@@ -88,8 +88,9 @@ export interface Event {
   end_time: string;
   venue_name: string | null;
   max_attendees: number;
-  qr_token: string | null;
-  qr_image_url: string | null;
+  join_code: string;
+  qr_access_enabled: boolean;
+  join_code_rotated_at?: string | null;
   status: EventStatus;
   accent_color: string | null;
   cover_image_url: string | null;
@@ -103,6 +104,7 @@ export interface Media {
   id: string;
   event_id: string;
   file_url: string;
+  storage_file_id?: string | null;
   file_type: "photo" | "video";
   filter_applied: string | null;
   challenge_tag: string | null;
@@ -175,6 +177,7 @@ export interface AuthSession {
     displayName?: string;
   };
   accessToken: string;
+  role?: string;
 }
 
 export interface CreateClientInput {
@@ -208,8 +211,8 @@ export interface CreateEventInput {
 export interface UpdateEventInput extends Partial<CreateEventInput> {
   status?: EventStatus;
   max_attendees?: number;
-  qr_token?: string | null;
-  qr_image_url?: string | null;
+  qr_access_enabled?: boolean;
+  join_code?: string;
   portal_gallery_visible?: boolean;
   reel_shareable?: boolean;
   retention_expires_at?: string | null;

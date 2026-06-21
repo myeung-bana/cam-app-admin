@@ -84,7 +84,7 @@ export default async function EventDetailPage({ params }: Props) {
           </CardContent>
         </Card>
 
-        <QrDisplay imageUrl={event.qr_image_url} eventId={eventId} />
+        <QrDisplay joinCode={event.join_code} eventId={eventId} />
       </div>
     </div>
   );

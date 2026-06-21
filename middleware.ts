@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const ADMIN_PREFIX = "/admin";
-const PUBLIC_PATHS = ["/login", "/api"];
+import {
+  DEV_SESSION_COOKIE,
+  LOGIN_PATH,
+  MEMO_ACCESS_TOKEN_COOKIE,
+  MEMO_REFRESH_TOKEN_COOKIE,
+} from "@/lib/auth/constants";
 
 function isDevModeEnabled(): boolean {
   return (
@@ -10,22 +13,24 @@ function isDevModeEnabled(): boolean {
   );
 }
 
+function hasSessionCookies(request: NextRequest): boolean {
+  const hasDevSession =
+    isDevModeEnabled() && request.cookies.has(DEV_SESSION_COOKIE);
+
+  const hasMemoSession =
+    request.cookies.has(MEMO_REFRESH_TOKEN_COOKIE) &&
+    request.cookies.has(MEMO_ACCESS_TOKEN_COOKIE);
+
+  return hasDevSession || hasMemoSession;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
-  if (isPublic) return NextResponse.next();
-
-  if (pathname.startsWith(ADMIN_PREFIX)) {
-    const hasNhostSession = request.cookies.has("nhostSession");
-    const hasDevSession =
-      isDevModeEnabled() && request.cookies.has("devSession");
-
-    if (!hasNhostSession && !hasDevSession) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  if (pathname.startsWith("/admin") && !hasSessionCookies(request)) {
+    const loginUrl = new URL(LOGIN_PATH, request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

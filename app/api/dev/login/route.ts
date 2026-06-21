@@ -20,6 +20,8 @@ export async function POST(req: NextRequest) {
       id: "dev-admin-user",
       email,
       displayName: email.split("@")[0],
+      defaultRole: "admin",
+      roles: ["admin"],
     },
   };
 
