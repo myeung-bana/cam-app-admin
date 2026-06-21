@@ -13,7 +13,7 @@ export const UPDATE_MEDIA = gql`
       uploaded_at
       is_hidden
       is_starred
-      session {
+      session: guest_session {
         display_name
       }
     }

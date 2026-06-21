@@ -1,42 +1,48 @@
 import { gql } from "graphql-tag";
 
+const AUTH_USER_FIELDS = `
+  id
+  email
+  displayName
+  disabled
+  lastSeen
+  createdAt
+  updatedAt
+  phoneNumber
+  metadata
+  roles {
+    role
+  }
+`;
+
 export const GET_ADMIN_USERS = gql`
   query GetAdminUsers {
-    admin_users(order_by: { name: asc }) {
-      id
-      name
-      email
-      role
-      status
-      phone
-      notes
-      last_login_at
-      created_at
-      updated_at
+    users(
+      where: { roles: { role: { _eq: "admin" } } }
+      order_by: { displayName: asc }
+    ) {
+      ${AUTH_USER_FIELDS}
     }
   }
 `;
 
 export const GET_ADMIN_USER_BY_ID = gql`
   query GetAdminUserById($id: uuid!) {
-    admin_users_by_pk(id: $id) {
-      id
-      name
-      email
-      role
-      status
-      phone
-      notes
-      last_login_at
-      created_at
-      updated_at
+    user(id: $id) {
+      ${AUTH_USER_FIELDS}
     }
   }
 `;
 
 export const GET_ADMIN_USER_BY_EMAIL = gql`
   query GetAdminUserByEmail($email: String!) {
-    admin_users(where: { email: { _eq: $email } }, limit: 1) {
+    users(
+      where: {
+        email: { _eq: $email }
+        roles: { role: { _eq: "admin" } }
+      }
+      limit: 1
+    ) {
       id
       email
     }

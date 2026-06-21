@@ -14,57 +14,69 @@ import {
 } from "@/lib/graphql/admin-users/queries";
 import { UPDATE_ADMIN_USER } from "@/lib/graphql/admin-users/mutations";
 import { createAdminUserFromFunction } from "@/lib/functions/admin-users";
+import {
+  AuthUserRow,
+  buildAdminUserMetadata,
+  hasAdminRole,
+  mapAuthUserToAdminUser,
+  parseAdminUserMetadata,
+} from "@/lib/auth/admin-user-profile";
 import type {
   AdminUser,
   CreateAdminUserInput,
   UpdateAdminUserInput,
 } from "@/lib/types";
 
-interface AdminUserRow {
-  id: string;
-  name: string;
-  email: string;
-  role: AdminUser["role"];
-  status: AdminUser["status"];
-  phone?: string | null;
-  notes?: string | null;
-  last_login_at?: string | null;
-  created_at: string;
-  updated_at?: string;
+function mapAuthUserRow(row: AuthUserRow | null | undefined): AdminUser | null {
+  if (!row || !hasAdminRole(row.roles)) return null;
+  return mapAuthUserToAdminUser(row);
 }
 
-function mapAdminUser(row: AdminUserRow): AdminUser {
-  return {
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    role: row.role,
-    status: row.status,
-    phone: row.phone ?? null,
-    notes: row.notes ?? null,
-    last_login_at: row.last_login_at ?? null,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-  };
+function buildAuthUserUpdate(
+  input: UpdateAdminUserInput,
+  existing?: AuthUserRow
+) {
+  const set: Record<string, unknown> = {};
+
+  if (input.name !== undefined) {
+    set.displayName = input.name;
+  }
+  if (input.status !== undefined) {
+    set.disabled = input.status === "inactive";
+  }
+  if (input.phone !== undefined) {
+    set.phoneNumber = input.phone || null;
+  }
+
+  if (input.role !== undefined || input.notes !== undefined) {
+    const existingMeta = parseAdminUserMetadata(existing?.metadata);
+    set.metadata = buildAdminUserMetadata(
+      {
+        adminRole: input.role ?? existingMeta.adminRole,
+        notes: input.notes ?? existingMeta.notes,
+      },
+      existing?.metadata
+    );
+  }
+
+  return set;
 }
 
 export async function getAdminUsers(): Promise<AdminUser[]> {
   if (isDevMode()) return getDevAdminUsers();
   if (!isBackendConfigured()) return [];
-  const data = await executeGraphQL<{ admin_users: AdminUserRow[] }>(
-    GET_ADMIN_USERS
-  );
-  return data.admin_users.map(mapAdminUser);
+  const data = await executeGraphQL<{ users: AuthUserRow[] }>(GET_ADMIN_USERS);
+  return data.users.map(mapAuthUserToAdminUser);
 }
 
 export async function getAdminUserById(id: string): Promise<AdminUser | null> {
   if (isDevMode()) return getDevAdminUserById(id);
   if (!isBackendConfigured()) return null;
-  const data = await executeGraphQL<{ admin_users_by_pk: AdminUserRow | null }>(
+  const data = await executeGraphQL<{ user: AuthUserRow | null }>(
     GET_ADMIN_USER_BY_ID,
     { id }
   );
-  return data.admin_users_by_pk ? mapAdminUser(data.admin_users_by_pk) : null;
+  return mapAuthUserRow(data.user);
 }
 
 export async function createAdminUser(
@@ -81,9 +93,28 @@ export async function updateAdminUser(
   input: UpdateAdminUserInput
 ): Promise<AdminUser> {
   if (isDevMode()) return updateDevAdminUser(id, input);
-  const data = await executeGraphQL<{ update_admin_users_by_pk: AdminUserRow }>(
-    UPDATE_ADMIN_USER,
-    { id, set: input }
+
+  const existing = await executeGraphQL<{ user: AuthUserRow | null }>(
+    GET_ADMIN_USER_BY_ID,
+    { id }
   );
-  return mapAdminUser(data.update_admin_users_by_pk);
+  const current = mapAuthUserRow(existing.user);
+  if (!current) {
+    throw new Error("Admin user not found");
+  }
+
+  const set = buildAuthUserUpdate(input, existing.user ?? undefined);
+  if (Object.keys(set).length === 0) {
+    return current;
+  }
+
+  const data = await executeGraphQL<{ updateUser: AuthUserRow }>(
+    UPDATE_ADMIN_USER,
+    { id, set }
+  );
+  const updated = mapAuthUserRow(data.updateUser);
+  if (!updated) {
+    throw new Error("Failed to update admin user");
+  }
+  return updated;
 }
