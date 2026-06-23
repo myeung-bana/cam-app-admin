@@ -5,6 +5,7 @@ export const SUCCESS_MESSAGES = {
   clientUpdated: "Client saved successfully",
   clientArchived: "Client archived",
   eventCreated: "Event created successfully",
+  eventUpdated: "Event saved successfully",
   taxonomyCreated: "Taxonomy item created successfully",
   taxonomyUpdated: "Changes saved successfully",
   adminUserCreated: "Admin user invited successfully",

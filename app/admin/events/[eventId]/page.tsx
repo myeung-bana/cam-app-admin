@@ -5,7 +5,7 @@ import { EventStatusBadge } from "@/components/shared/status-badge";
 import { QrDisplay } from "@/components/shared/qr-display";
 import { EventNav } from "@/components/shared/event-nav";
 import { formatDateTime } from "@/lib/utils/format";
-import { EventStatusActions } from "../_components/event-status-actions";
+import { EventDetailActions } from "../_components/event-detail-actions";
 import {
   Card,
   CardContent,
@@ -34,7 +34,7 @@ export default async function EventDetailPage({ params }: Props) {
         badge={<EventStatusBadge status={event.status} />}
         description={event.client.name}
       >
-        <EventStatusActions eventId={eventId} status={event.status} />
+        <EventDetailActions eventId={eventId} status={event.status} />
       </EntityHeader>
 
       <EventNav eventId={eventId} status={event.status} />

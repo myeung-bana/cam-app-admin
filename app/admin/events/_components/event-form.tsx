@@ -1,15 +1,20 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { eventSchema, type EventInput } from "@/lib/schemas/event.schema";
 import { getActionErrorMessage } from "@/lib/utils/server-action-error";
-import type { Client } from "@/lib/types";
-import { createEventAction } from "../_actions/event.actions";
-import { Button } from "@/components/ui/button";
+import { toDatetimeLocalValue } from "@/lib/utils/format";
+import type { Client, Event } from "@/lib/types";
+import {
+  createEventAction,
+  updateEventAction,
+} from "../_actions/event.actions";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,14 +38,16 @@ import type { TaxonomyOption } from "@/lib/data/taxonomy";
 interface EventFormProps {
   clients: Client[];
   eventTypeOptions: TaxonomyOption[];
+  event?: Event;
 }
 
-export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
-  const router = useRouter();
+export function EventForm({ clients, eventTypeOptions, event }: EventFormProps) {
   const searchParams = useSearchParams();
+  const isEditing = Boolean(event);
   const preselectedClientId =
-    searchParams.get("clientId") ?? clients[0]?.id ?? "";
-  const defaultEventType = eventTypeOptions[0]?.value ?? "";
+    event?.client_id ?? searchParams.get("clientId") ?? clients[0]?.id ?? "";
+  const defaultEventType =
+    event?.event_type ?? eventTypeOptions[0]?.value ?? "";
   const [step, setStep] = useState(1);
   const [isPending, startTransition] = useTransition();
 
@@ -54,10 +61,15 @@ export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
   } = useForm<EventInput>({
     resolver: zodResolver(eventSchema) as Resolver<EventInput>,
     defaultValues: {
-      max_attendees: 150,
+      name: event?.name ?? "",
       client_id: preselectedClientId,
       event_type: defaultEventType,
-      accent_color: "#6366f1",
+      start_time: event ? toDatetimeLocalValue(event.start_time) : "",
+      end_time: event ? toDatetimeLocalValue(event.end_time) : "",
+      venue_name: event?.venue_name ?? "",
+      max_attendees: event?.max_attendees ?? 150,
+      accent_color: event?.accent_color ?? "#6366f1",
+      cover_image_url: event?.cover_image_url ?? "",
     },
   });
 
@@ -87,9 +99,18 @@ export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
 
     startTransition(async () => {
       try {
-        await createEventAction(formData);
+        if (isEditing && event) {
+          await updateEventAction(event.id, formData);
+        } else {
+          await createEventAction(formData);
+        }
       } catch (err) {
-        toast.error(getActionErrorMessage(err, "Failed to create event"));
+        toast.error(
+          getActionErrorMessage(
+            err,
+            isEditing ? "Failed to save event" : "Failed to create event"
+          )
+        );
       }
     });
   }
@@ -97,9 +118,14 @@ export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
   return (
     <Card className="max-w-2xl">
       <CardHeader>
-        <CardTitle>Create event</CardTitle>
+        <CardTitle>{isEditing ? "Edit event" : "Create event"}</CardTitle>
         <CardDescription>
           Step {step} of 2 — {step === 1 ? "Basics" : "Branding"}
+          {isEditing && event?.status === "live" && (
+            <span className="mt-2 block text-amber-600 dark:text-amber-400">
+              This event is live. Saving changes will not rotate the join code or QR.
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -233,7 +259,13 @@ export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
           {step === 2 ? (
             <>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Creating…" : "Create event"}
+                {isPending
+                  ? isEditing
+                    ? "Saving…"
+                    : "Creating…"
+                  : isEditing
+                    ? "Save changes"
+                    : "Create event"}
               </Button>
               <Button type="button" variant="outline" onClick={() => setStep(1)}>
                 Back
@@ -244,9 +276,16 @@ export function EventForm({ clients, eventTypeOptions }: EventFormProps) {
               <Button type="button" onClick={goToStep2}>
                 Continue to branding
               </Button>
-              <Button type="button" variant="outline" onClick={() => router.back()}>
+              <Link
+                href={
+                  isEditing && event
+                    ? `/admin/events/${event.id}`
+                    : "/admin/events"
+                }
+                className={buttonVariants({ variant: "outline" })}
+              >
                 Cancel
-              </Button>
+              </Link>
             </>
           )}
         </CardFooter>

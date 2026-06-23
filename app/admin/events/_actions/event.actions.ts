@@ -18,6 +18,7 @@ import type { EventStatus } from "@/lib/types";
 function revalidateEvent(eventId: string) {
   revalidatePath("/admin/events");
   revalidatePath(`/admin/events/${eventId}`);
+  revalidatePath(`/admin/events/edit/${eventId}`);
   revalidatePath(`/admin/events/${eventId}/live`);
   revalidatePath(`/admin/events/${eventId}/media`);
   revalidatePath(`/admin/events/${eventId}/challenges`);
@@ -40,6 +41,23 @@ export async function createEventAction(formData: FormData) {
   });
   revalidatePath("/admin/events");
   redirectWithSuccessFlash(`/admin/events/${event.id}`, "eventCreated");
+}
+
+export async function updateEventAction(eventId: string, formData: FormData) {
+  const raw = Object.fromEntries(formData);
+  const parsed = eventSchema.safeParse(raw);
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  }
+
+  await updateEvent(eventId, {
+    ...parsed.data,
+    start_time: new Date(parsed.data.start_time).toISOString(),
+    end_time: new Date(parsed.data.end_time).toISOString(),
+  });
+  revalidateEvent(eventId);
+  redirectWithSuccessFlash(`/admin/events/${eventId}`, "eventUpdated");
 }
 
 export async function transitionEventStatusAction(

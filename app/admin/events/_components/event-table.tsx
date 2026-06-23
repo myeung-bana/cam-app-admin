@@ -34,6 +34,11 @@ function EventActions({ eventId }: { eventId: string }) {
           View
         </DropdownMenuItem>
         <DropdownMenuItem
+          onClick={() => router.push(`/admin/events/edit/${eventId}`)}
+        >
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem
           onClick={() => router.push(`/admin/events/${eventId}/media`)}
         >
           Media gallery
